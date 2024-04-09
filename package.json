@@ -1,0 +1,27 @@
+{
+  "name": "fresh_drand_calindra",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "watch": "node --env-file=.env --inspect --watch src/main.js",
+    "start": "node --env-file=.env src/main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Calindra",
+  "license": "MIT",
+  "dependencies": {
+    "@calindra/brunodo": "^0.2.0",
+    "seedrandom": "^3.0.5"
+  },
+  "devDependencies": {
+    "@types/seedrandom": "^3.0.8",
+    "prettier": "^3.2.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
