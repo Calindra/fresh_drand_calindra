@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 
-export function runProcess(path) {
+export async function runProcess(path) {
   const prc = spawn(path);
 
   prc.on("exit", (code) => {

@@ -1,25 +1,35 @@
 import { get as request } from "node:https";
-import { arch, tmpdir } from "node:os";
+import { arch, platform, tmpdir } from "node:os";
 import { URL } from "node:url";
 import { Buffer } from "node:buffer";
 import { writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { existsSync } from "node:fs";
+import { runProcess } from "./proc.js";
 const repoGithub = process.env.GITHUB_DRAND_REPO;
 const version = process.env.DRAND_VERSION;
 
-const AVAILABLE_PLATFORMS = new Set([
-  "aarch64",
-  "armv7",
-  "i686",
-  "riscv64gc",
-  "x86_64",
+const AVAILABLE_ARCH = new Map([
+  ["arm64", "aarch64"],
+  ["arm", "armv7"],
+  ["ia32", "i686"],
+  ["riscv64", "riscv64gc"],
+  ["x64", "x86_64"],
 ]);
 
+const AVAILABLE_PLATFORMS = ["linux"];
+
 function getArch() {
+  const myPlatform = platform();
   const myArch = arch();
 
-  if (!AVAILABLE_PLATFORMS.has(myArch)) {
+  if (!AVAILABLE_PLATFORMS.includes(myPlatform)) {
+    throw new Error(`Platform ${myPlatform} is not supported`);
+  }
+
+  const realArch = AVAILABLE_ARCH.get(myArch);
+
+  if (!realArch) {
     throw new Error(`Arch ${myArch} is not supported`);
   }
 
@@ -45,6 +55,8 @@ function getBinaryAndConfig() {
  * @returns {Promise<Buffer>}
  * */
 function makeRequest(url) {
+  console.log(`Downloading ${url}`);
+
   return new Promise((resolve, reject) => {
     request(url, (response) => {
       const statusCode = response.statusCode;
@@ -82,10 +94,9 @@ async function getOrSaveBinary(path, filename) {
   }
   return Promise.all([
     makeRequest(url.binary).then((buffer) =>
-      // writeFile(fullpathBinary, buffer, { mode: 0o755 }),
       writeFile(fullpathBinary, buffer, { mode: 0o755 }),
     ),
-    makeRequest(url.config).writeFile((config) =>
+    makeRequest(url.config).then((config) =>
       writeFile(fullpathConfig, config, { mode: 0o644 }),
     ),
   ]);
@@ -99,4 +110,6 @@ export async function runDrand() {
 
   await getOrSaveBinary(path, filename);
   console.log(`Binary downloaded at ${fullpath}`);
+
+  return runProcess(fullpath);
 }
